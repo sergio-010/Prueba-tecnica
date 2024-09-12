@@ -41,9 +41,7 @@ function Form({ cardDescription, textButton, cardTitle, product }: ProductFormPr
 
     const [categories, setCategories] = useState<{ label: string, value: string }[]>([]);
     const [error, setError] = useState<string | null>(null);
-    //loading
-
-
+    const [loading, setLoading] = useState(false); // Estado de carga
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -91,30 +89,34 @@ function Form({ cardDescription, textButton, cardTitle, product }: ProductFormPr
             category: Yup.string().required('Required'),
         }),
 
-        onSubmit: (values) => {
-            console.log(values);
-            const newProduct = { ...values, id: Date.now() };
-            const products = localStorage.getItem('products');
+        onSubmit: async (values) => {
+            setLoading(true); // Iniciar el estado de carga
+            try {
+                const newProduct = { ...values, id: Date.now() };
+                const products = localStorage.getItem('products');
 
-            if (products) {
-                const productsArray = JSON.parse(products);
+                if (products) {
+                    const productsArray = JSON.parse(products);
 
-                //update Product
-                if (product) {
-                    const productIndex = productsArray.findIndex((product: Products) => product.id === product.id);
-                    productsArray[productIndex] = newProduct;
+                    //update Product
+                    if (product) {
+                        const productIndex = productsArray.findIndex((p: Products) => p.id === product.id);
+                        productsArray[productIndex] = newProduct;
+                        localStorage.setItem('products', JSON.stringify(productsArray));
+                        router.push('/');
+                        return;
+                    }
+
+                    //create Product
+                    productsArray.unshift(newProduct);
                     localStorage.setItem('products', JSON.stringify(productsArray));
                     router.push('/');
-                    return;
                 }
-
-                //create Product
-                productsArray.unshift(newProduct);
-                localStorage.setItem('products', JSON.stringify(productsArray));
-                router.push('/');
+            } catch (error) {
+                console.error('Error creating/updating product', error);
+            } finally {
+                setLoading(false);
             }
-
-
         },
     });
 
@@ -126,7 +128,7 @@ function Form({ cardDescription, textButton, cardTitle, product }: ProductFormPr
 
     return (
         <div className="flex justify-center items-center">
-            <form onSubmit={formik.handleSubmit} >
+            <form onSubmit={formik.handleSubmit}>
                 <Card className="w-[350px]">
                     <CardHeader>
                         <CardTitle>{cardTitle}</CardTitle>
@@ -180,13 +182,17 @@ function Form({ cardDescription, textButton, cardTitle, product }: ProductFormPr
                                 )}
                             </div>
                             <div className="flex flex-col space-y-1.5">
-                                <Label htmlFor="category">Category</Label>
+                                <Label htmlFor="category" >Category</Label>
                                 <select
                                     id="category"
-                                    name="category" value={formik.values.category} onChange={formik.handleChange}>
-                                    <option value="default">Select a category</option>
+                                    name="category"
+                                    value={formik.values.category}
+                                    onChange={formik.handleChange}
+                                    className="w-full bg-transparent"
+                                >
+                                    <option value="default" className="text-black">Select a category</option>
                                     {categories.map((category) => (
-                                        <option key={category.value} value={category.value}>
+                                        <option key={category.value} value={category.value} className="text-black">
                                             {category.label}
                                         </option>
                                     ))}
@@ -199,7 +205,9 @@ function Form({ cardDescription, textButton, cardTitle, product }: ProductFormPr
                     </CardContent>
                     <CardFooter className="flex justify-between">
                         <Button variant="outline" type="button" onClick={() => router.push('/')}>Cancel</Button>
-                        <Button type="submit">{textButton}</Button>
+                        <Button type="submit" disabled={loading}>
+                            {loading ? 'Loading...' : textButton}
+                        </Button>
                     </CardFooter>
                 </Card>
             </form>
@@ -208,5 +216,3 @@ function Form({ cardDescription, textButton, cardTitle, product }: ProductFormPr
 }
 
 export default Form;
-
-
