@@ -1,38 +1,22 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import CustomTable from "@/components/ui/CustomTable";
 import { Products } from "@/interface";
 import { Column } from "@/interface/table";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 
-
 interface Props {
     products: Products[];
 }
 
 const columns: Column<Products>[] = [
-    {
-        title: "ID",
-        accessor: "id",
-    },
-    {
-        title: "Title",
-        accessor: "title",
-    },
-    {
-        title: "Price",
-        accessor: "price",
-    },
-    {
-        title: "Description",
-        accessor: "description",
-    },
-    {
-        title: "Category",
-        accessor: "category",
-    },
+    { title: "ID", accessor: "id" },
+    { title: "Title", accessor: "title" },
+    { title: "Price", accessor: "price" },
+    { title: "Description", accessor: "description" },
+    { title: "Category", accessor: "category" },
 ];
 
 const ListProducts = ({ products }: Props) => {
@@ -45,16 +29,23 @@ const ListProducts = ({ products }: Props) => {
     }, [products]);
 
     useEffect(() => {
-        // Filtrar productos según el término de búsqueda
-        const filteredProducts = products.filter(product =>
-            product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        const filteredProducts = products.filter(({ title, description }) =>
+            title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            description.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setProductList(filteredProducts);
     }, [searchTerm, products]);
 
-    const deleteProduct = async (id: number) => {
-        const newProducts = productList.filter(product => product.id !== id);
+    const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+    };
+
+    const handleEdit = (item: Products) => {
+        router.push(`/product/${item.id}`);
+    };
+
+    const handleDelete = async (item: Products) => {
+        const newProducts = productList.filter(({ id }) => id !== item.id);
         setProductList(newProducts);
         localStorage.setItem('products', JSON.stringify(newProducts));
     };
@@ -65,27 +56,20 @@ const ListProducts = ({ products }: Props) => {
                 type="text"
                 placeholder="Search..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 className="mb-4 p-2 border border-gray-300 rounded"
             />
-
             <CustomTable
                 data={productList}
                 columns={columns}
                 controls={[
                     {
                         icon: "edit",
-                        onClickEvent: (item) => {
-                            console.log(item);
-                            router.push(`/product/${item.id}`);
-                        },
+                        onClickEvent: handleEdit,
                     },
                     {
                         icon: "delete",
-                        onClickEvent: (item) => {
-                            console.log(item);
-                            deleteProduct(item.id);
-                        },
+                        onClickEvent: handleDelete,
                     },
                 ]}
             />

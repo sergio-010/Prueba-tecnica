@@ -1,34 +1,10 @@
-'use client'
+'use client';
 
-import { getAllProducts } from "@/services/products";
 import ListProducts from "./product/components/ListProducts";
-import { useEffect, useState } from "react";
-import { Products } from "@/interface";
-
+import { useProducts } from "@/hooks/useProducts";
 
 export default function Home() {
-
-  const [products, setProducts] = useState<Products[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const products = await getAllProducts();
-      setProducts(products);
-      localStorage.setItem('products', JSON.stringify(products));
-    };
-
-    const productStorages = localStorage.getItem('products');
-
-    if (productStorages) {
-      setProducts(JSON.parse(productStorages));
-      setIsLoading(false);
-    } else {
-      fetchData();
-      setIsLoading(false);
-    }
-
-  }, []);
+  const { products, isLoading, error } = useProducts();
 
   if (isLoading) {
     return (
@@ -37,7 +13,10 @@ export default function Home() {
       </div>
     );
   }
-  return (
-    <ListProducts products={products} />
-  );
+
+  if (error) {
+    return <div className="text-center text-red-500">{error}</div>;
+  }
+
+  return <ListProducts products={products} />;
 }
